@@ -41,6 +41,10 @@ p_exit = (1 / (1 + np.exp(-((48 - btc_d) * 0.3 + btc_z * 1.5)))) * 100
 st.set_page_config(layout="wide", page_title="Institutional Exit Engine")
 st.title("🚦 Institutional Exit Engine")
 
+m1, m2, m3 = st.columns(3)
+m1.metric("Market Rotation Prob.", f"{p_exit:.1f}%")
+m3.metric("BTC Dominance", f"{btc_d:.1f}%")
+
 rows = []
 total_progress = []
 
@@ -50,7 +54,6 @@ for c, t in TARGETS.items():
         prog = (pr / t) * 100
         total_progress.append(min(prog, 100))
         
-        # Logica culori
         if p_exit > 70 and prog > 85: status = "🟩 SELL"
         elif p_exit > 45 and prog > 55: status = "🟨 PREPARE"
         else: status = "🟥 HOLD"
@@ -60,28 +63,18 @@ for c, t in TARGETS.items():
             "Live Price": round(pr, 4),
             "Target": t,
             "Progress %": round(prog, 1),
-            "Status": status
+            "Signal": status
         })
 
 df = pd.DataFrame(rows)
 avg_exit_progress = sum(total_progress) / len(total_progress) if total_progress else 0
-
-# --- DASHBOARD ---
-m1, m2, m3 = st.columns(3)
-m1.metric("Market Rotation Prob.", f"{p_exit:.1f}%")
 m2.metric("Portfolio Exit Progress", f"{avg_exit_progress:.1f}%")
-m3.metric("BTC Dominance", f"{btc_d:.1f}%")
 
 st.markdown("### 🎯 Portfolio Global Exit Status")
 st.progress(avg_exit_progress / 100)
 
-# FUNCTIA DE STILIZARE REPARATA
-def style_status(val):
-    if "🟩" in str(val): return 'background-color: #00c853; color: white'
-    if "🟨" in str(val): return 'background-color: #ffeb3b; color: black'
-    if "🟥" in str(val): return 'background-color: #d32f2f; color: white'
-    return ''
-
 st.subheader("Individual Asset Strategy")
-# Am schimbat 'Action' cu 'Status' ca sa se potriveasca exact cu tabelul
-st.dataframe(df.style.applymap(style_status, subset=['Status']), use_container_width=True)
+# Am eliminat complet stilizarea tabelului (applymap) pentru a evita eroarea
+st.table(df) 
+
+st.info("💡 Legenda: 🟥 HOLD (Așteaptă) | 🟨 PREPARE (Fii gata) | 🟩 SELL (Vinde)")
